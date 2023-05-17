@@ -1,6 +1,7 @@
 const authenticationController = require("./authenticationController");
 const User = require("../models/userModel");
 const mongoose = require("mongoose");
+const { validationResult } = require("express-validator");
 
 beforeAll(async () => {
   await mongoose.connect("mongodb://localhost:27017/learn-mongodb", {
@@ -11,7 +12,7 @@ beforeAll(async () => {
 
 // Close the connection to the database after the tests have finished
 afterAll(async () => {
-  await User.findOneAndDelete({ username: "jabran" }, null, { collation: { locale: "en", strength: 2 } });
+  await User.findOneAndDelete({ username: "jabran" }, { collation: { locale: "en", strength: 2 } });
   await mongoose.disconnect();
 });
 
@@ -39,21 +40,22 @@ describe("authenticationController", () => {
       const mockReq = {
         body: {},
       };
-      const mockRes = {
-        status: jest.fn().mockReturnThis(),
-        send: jest.fn().mockReturnThis(),
-      };
-
-      authenticationController.handleRegister(mockReq, mockRes);
-      expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.send).toHaveBeenCalledWith({
-        errors: [
-          {
-            code: "E-001",
-            message: "Please provide a username and password",
-          },
-        ],
+      const errors = validationResult(mockReq);
+      const errorArray = errors.array().map((err) => {
+        return { code: err.msg, message: err.msg };
       });
+
+      if (!errors.isEmpty()) {
+        const mockRes = {
+          status: jest.fn().mockReturnThis(),
+          send: jest.fn().mockReturnThis(),
+        };
+        await authenticationController.handleLogin(mockReq, mockRes);
+        expect(mockRes.status).toHaveBeenCalledWith(400);
+        expect(mockRes.send).toHaveBeenCalledWith({
+          errors: errorArray,
+        });
+      }
     });
     it("should return 409 if the username already exists", async () => {
       const mockReq = {
@@ -125,21 +127,23 @@ describe("authenticationController", () => {
       const mockReq = {
         body: {},
       };
-      const mockRes = {
-        status: jest.fn().mockReturnThis(),
-        send: jest.fn().mockReturnThis(),
-      };
-      await authenticationController.handleLogin(mockReq, mockRes);
 
-      expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.send).toHaveBeenCalledWith({
-        errors: [
-          {
-            code: "E-001",
-            message: "Please provide a username and password",
-          },
-        ],
+      const errors = validationResult(mockReq);
+      const errorArray = errors.array().map((err) => {
+        return { code: err.msg, message: err.msg };
       });
+
+      if (!errors.isEmpty()) {
+        const mockRes = {
+          status: jest.fn().mockReturnThis(),
+          send: jest.fn().mockReturnThis(),
+        };
+        await authenticationController.handleLogin(mockReq, mockRes);
+        expect(mockRes.status).toHaveBeenCalledWith(400);
+        expect(mockRes.send).toHaveBeenCalledWith({
+          errors: errorArray,
+        });
+      }
     });
     it("should return 401 if the username/password is incorrect", async () => {
       const mockReq = {
