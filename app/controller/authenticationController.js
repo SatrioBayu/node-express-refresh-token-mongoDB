@@ -6,17 +6,7 @@ require("dotenv").config();
 const handleRegister = async (req, res) => {
   try {
     const { username, password } = req.body;
-    if (!username || !password) {
-      return res.status(400).send({
-        errors: [
-          {
-            code: "E-001",
-            message: "Please provide a username and password",
-          },
-        ],
-      });
-    }
-    const userExist = await User.findOne({ username }).exec();
+    const userExist = await User.findOne({ username }, null, { collation: { locale: "en", strength: 2 } });
     if (userExist) {
       return res.status(409).send({
         errors: [
@@ -54,17 +44,7 @@ const handleRegister = async (req, res) => {
 const handleLogin = async (req, res) => {
   try {
     const { username, password } = req.body;
-    if (!username || !password) {
-      return res.status(400).send({
-        errors: [
-          {
-            code: "E-001",
-            message: "Please provide a username and password",
-          },
-        ],
-      });
-    }
-    const user = await User.findOne({ username }).exec();
+    const user = await User.findOne({ username }, null, { collation: { locale: "en", strength: 2 } }).exec();
     if (!user) {
       return res.status(401).send({
         errors: [
@@ -98,7 +78,7 @@ const handleLogin = async (req, res) => {
       });
 
     const accessToken = generateAccessToken(user);
-    const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_TOKEN_SECRET_KEY);
+    // const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_TOKEN_SECRET_KEY);
 
     // PROD
     // res.cookie("refreshToken", refreshToken, {
@@ -107,16 +87,15 @@ const handleLogin = async (req, res) => {
     // });
 
     // DEV
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      maxAge: 1000 * 60,
-    });
+    // res.cookie("refreshToken", refreshToken, {
+    //   httpOnly: true,
+    //   maxAge: 1000 * 60,
+    // });
 
     res.status(200).send({
       accessToken,
     });
   } catch (error) {
-    console.log(error.message);
     res.status(500).send({
       errors: [
         {
