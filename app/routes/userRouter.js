@@ -8,7 +8,4 @@ router.get("/", (req, res) => {
   });
 });
 
-router.post("/register", authenticationController.handleRegister);
-router.get("/:id", authenticationController.handleWhoAmI);
-
 module.exports = router;
