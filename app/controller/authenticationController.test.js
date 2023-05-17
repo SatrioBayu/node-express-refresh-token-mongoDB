@@ -145,10 +145,32 @@ describe("authenticationController", () => {
         });
       }
     });
-    it("should return 401 if the username/password is incorrect", async () => {
+    it("should return 401 if the password is incorrect", async () => {
       const mockReq = {
         body: {
           username: "bayu",
+          password: "password",
+        },
+      };
+      const mockRes = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+      };
+      await authenticationController.handleLogin(mockReq, mockRes);
+      expect(mockRes.status).toHaveBeenCalledWith(401);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        errors: [
+          {
+            code: "E-004",
+            message: "Invalid username or password",
+          },
+        ],
+      });
+    });
+    it("should return 401 if the username is incorrect", async () => {
+      const mockReq = {
+        body: {
+          username: "bambang",
           password: "password",
         },
       };
