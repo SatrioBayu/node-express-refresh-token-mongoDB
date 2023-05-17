@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jest --detectOpenHandles --coverage",
+    "test": "jest --detectOpenHandles",
     "start:dev": "nodemon bin/www"
   },
   "author": "",
@@ -19,5 +19,8 @@
     "jsonwebtoken": "^9.0.0",
     "mongodb": "^5.5.0",
     "mongoose": "^7.1.1"
+  },
+  "devDependencies": {
+    "jest": "^29.5.0"
   }
 }
