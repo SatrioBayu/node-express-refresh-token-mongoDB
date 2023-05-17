@@ -11,7 +11,7 @@ beforeAll(async () => {
 
 // Close the connection to the database after the tests have finished
 afterAll(async () => {
-  await User.findOneAndDelete({ username: "jabran" }, { collation: { locale: "en", strength: 2 } });
+  await User.findOneAndDelete({ username: "jabran" }, null, { collation: { locale: "en", strength: 2 } });
   await mongoose.disconnect();
 });
 
