@@ -1,5 +1,5 @@
 const authenticationController = require("./authenticationController");
-const User = require("../models/userModel");
+const { User, BlacklistToken } = require("../models");
 const mongoose = require("mongoose");
 const { validationResult } = require("express-validator");
 const jwt = require("jsonwebtoken");
@@ -9,11 +9,18 @@ beforeAll(async () => {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   });
+  const blacklistedToken = new BlacklistToken({
+    token: process.env.BLACKLIST_TOKEN,
+  });
+  await blacklistedToken.save();
 });
 
 // Close the connection to the database after the tests have finished
 afterAll(async () => {
   await User.findOneAndDelete({ username: "jabran" }, { collation: { locale: "en", strength: 2 } });
+  await BlacklistToken.findOneAndDelete({
+    token: process.env.BLACKLIST_TOKEN,
+  });
   await mongoose.disconnect();
 });
 
@@ -61,7 +68,7 @@ describe("authenticationController", () => {
     it("should return 403 if the token is valid but already blacklisted", async () => {
       const mockReq = {
         headers: {
-          authorization: "Bearer valid",
+          authorization: `Bearer ${process.env.BLACKLIST_TOKEN}`,
         },
       };
       const mockRes = {
