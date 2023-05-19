@@ -3,6 +3,7 @@ const router = express.Router();
 const { authenticationController } = require("../controller");
 const bodyValidation = require("../validation/bodyValidation");
 const validationResult = require("../validation/validationResult");
+const uploadOnMemory = require("../middleware/multer");
 
 router.get("/", (req, res) => {
   res.send({
