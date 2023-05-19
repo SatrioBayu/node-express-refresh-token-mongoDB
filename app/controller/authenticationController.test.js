@@ -18,9 +18,7 @@ beforeAll(async () => {
 // Close the connection to the database after the tests have finished
 afterAll(async () => {
   await User.findOneAndDelete({ username: "jabran" }, { collation: { locale: "en", strength: 2 } });
-  await BlacklistToken.findOneAndDelete({
-    token: process.env.BLACKLIST_TOKEN,
-  });
+  await BlacklistToken.deleteMany({});
   await mongoose.disconnect();
 });
 
@@ -365,6 +363,145 @@ describe("authenticationController", () => {
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.send).toHaveBeenCalledWith({
         accessToken: expect.any(String),
+      });
+    });
+  });
+
+  describe("logoutUser", () => {
+    it("should return 500 if there's error in try catch code", async () => {
+      const mockReq = {};
+      const mockRes = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+      };
+      await authenticationController.handleLogout(mockReq, mockRes);
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        errors: [
+          {
+            code: "E-007",
+            message: expect.any(String),
+          },
+        ],
+      });
+    });
+    it("should return 403 if the token is invalid", async () => {
+      const mockReq = {
+        body: {
+          username: "Rora",
+          token: "invalid",
+        },
+        cookies: {
+          refreshToken: "123",
+        },
+      };
+      const mockRes = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+      };
+      await authenticationController.handleLogout(mockReq, mockRes);
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        errors: [
+          {
+            code: "E-010",
+            message: expect.any(String),
+          },
+        ],
+      });
+    });
+    it("should return 403 if the token is valid but user not found", async () => {
+      const token = jwt.sign({ id: "64645ad046304d62536a3c15" }, process.env.ACCESS_TOKEN_SECRET_KEY, { expiresIn: "10s" });
+      const mockReq = {
+        body: {
+          username: "Rora",
+          token,
+        },
+        cookies: {
+          refreshToken: "123",
+        },
+      };
+      const mockRes = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+      };
+      await authenticationController.handleLogout(mockReq, mockRes);
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        errors: [
+          {
+            code: "E-011",
+            message: "User from this token not found",
+          },
+        ],
+      });
+    });
+    it("should return 403 if the token is valid but not for the current user", async () => {
+      const token = jwt.sign({ id: "64645ad046304d62536a3c16" }, process.env.ACCESS_TOKEN_SECRET_KEY, { expiresIn: "10s" });
+      const mockReq = {
+        body: {
+          username: "Rora",
+          token,
+        },
+        cookies: {
+          refreshToken: "123",
+        },
+      };
+      const mockRes = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+      };
+      await authenticationController.handleLogout(mockReq, mockRes);
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        errors: [
+          {
+            code: "E-012",
+            message: expect.any(String),
+          },
+        ],
+      });
+    });
+    it("should return 403 if there's no refresh token (not logged in)", async () => {
+      const mockReq = {
+        cookies: {},
+      };
+      const mockRes = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+      };
+      await authenticationController.handleLogout(mockReq, mockRes);
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        errors: [
+          {
+            code: "E-013",
+            message: expect.any(String),
+          },
+        ],
+      });
+    });
+    it("should return 200 if everything is OK", async () => {
+      const token = jwt.sign({ id: "64645ad046304d62536a3c16" }, process.env.ACCESS_TOKEN_SECRET_KEY, { expiresIn: "10s" });
+      const mockReq = {
+        body: {
+          username: "Bayu",
+          token,
+        },
+        cookies: {
+          refreshToken: "123",
+        },
+      };
+      const mockRes = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+        clearCookie: jest.fn().mockReturnThis(),
+      };
+      await authenticationController.handleLogout(mockReq, mockRes);
+      expect(mockRes.clearCookie).toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        message: "Successfully logged out",
       });
     });
   });
