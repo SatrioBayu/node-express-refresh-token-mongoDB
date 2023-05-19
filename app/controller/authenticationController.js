@@ -175,7 +175,51 @@ const handleLogout = async (req, res) => {
       message: "Successfully logged out",
     });
   } catch (error) {
-    console.log(error.message);
+    res.status(500).send(InternErr.internalError(error.message));
+  }
+};
+
+const refreshToken = async (req, res) => {
+  try {
+    let newAccessToken;
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken)
+      return res.status(401).send({
+        errors: [
+          {
+            code: "E-008",
+            message: "No token provided",
+          },
+        ],
+      });
+
+    try {
+      const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET_KEY);
+      const user = await User.findById(decoded.id);
+      if (!user)
+        return res.status(403).send({
+          errors: [
+            {
+              code: "E-011",
+              message: "User from this token not found",
+            },
+          ],
+        });
+      newAccessToken = generateAccessToken(user);
+    } catch (error) {
+      return res.status(403).send({
+        errors: [
+          {
+            code: "E-010",
+            message: error.message,
+          },
+        ],
+      });
+    }
+    res.status(200).send({
+      accessToken: newAccessToken,
+    });
+  } catch (error) {
     res.status(500).send(InternErr.internalError(error.message));
   }
 };
@@ -184,4 +228,10 @@ const generateAccessToken = (user) => {
   return jwt.sign({ id: user.id }, process.env.ACCESS_TOKEN_SECRET_KEY, { expiresIn: "30m" });
 };
 
-module.exports = { handleRegister, handleLogin, handleAuth, handleLogout };
+module.exports = {
+  handleRegister,
+  handleLogin,
+  handleAuth,
+  handleLogout,
+  refreshToken,
+};
