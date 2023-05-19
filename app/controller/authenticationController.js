@@ -37,7 +37,7 @@ const handleAuth = async (req, res, next) => {
           errors: [
             {
               code: "E-011",
-              message: expect.any(String),
+              message: "User from this token not found",
             },
           ],
         });
@@ -47,7 +47,7 @@ const handleAuth = async (req, res, next) => {
         errors: [
           {
             code: "E-010",
-            message: expect.any(String),
+            message: error.message,
           },
         ],
       });
@@ -119,8 +119,69 @@ const handleLogin = async (req, res) => {
   }
 };
 
+const handleLogout = async (req, res) => {
+  try {
+    const refreshTokenCookie = req.cookies.refreshToken;
+    if (!refreshTokenCookie)
+      return res.status(403).send({
+        errors: [
+          {
+            code: "E-013",
+            message: "You are not logged in",
+          },
+        ],
+      });
+
+    const { username, token } = req.body;
+    try {
+      const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET_KEY);
+      const user = await User.findById(decoded.id);
+      if (!user)
+        return res.status(403).send({
+          errors: [
+            {
+              code: "E-011",
+              message: "User from this token not found",
+            },
+          ],
+        });
+
+      if (user.username.toLowerCase() !== username.toLowerCase())
+        return res.status(403).send({
+          errors: [
+            {
+              code: "E-012",
+              message: "Token not authorized for this user",
+            },
+          ],
+        });
+    } catch (error) {
+      return res.status(403).send({
+        errors: [
+          {
+            code: "E-010",
+            message: error.message,
+          },
+        ],
+      });
+    }
+    const tokenExist = await BlacklistToken.findOne({ token });
+    if (!tokenExist) {
+      const newBlacklistToken = new BlacklistToken({ token });
+      await newBlacklistToken.save();
+    }
+    res.clearCookie("refreshToken");
+    res.status(200).send({
+      message: "Successfully logged out",
+    });
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).send(InternErr.internalError(error.message));
+  }
+};
+
 const generateAccessToken = (user) => {
   return jwt.sign({ id: user.id }, process.env.ACCESS_TOKEN_SECRET_KEY, { expiresIn: "30m" });
 };
 
-module.exports = { handleRegister, handleLogin, handleAuth };
+module.exports = { handleRegister, handleLogin, handleAuth, handleLogout };
