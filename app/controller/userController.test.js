@@ -82,6 +82,25 @@ describe("User Controller", () => {
         ],
       });
     });
+    it("should return 200 if the new username is the same as the old one", async () => {
+      const mockReq = {
+        body: {
+          username: "Bayu",
+        },
+        user: {
+          id: "64673884dd70d7c7ca4dc599",
+        },
+      };
+      const mockRes = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+      };
+      await userController.handleUpdateUsername(mockReq, mockRes);
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        message: "No operation was performed since the new username is the same as the old username",
+      });
+    });
     it("should return 200 if everything is OK", async () => {
       const mockReq = {
         body: {

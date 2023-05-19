@@ -15,7 +15,7 @@ const handleUpdateUsername = async (req, res) => {
         ],
       });
     }
-    if (user.username === username) {
+    if (user.username.toLowerCase() === username.toLowerCase()) {
       return res.status(200).send({
         message: "No operation was performed since the new username is the same as the old username",
       });
