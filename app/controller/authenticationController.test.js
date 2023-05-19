@@ -505,4 +505,105 @@ describe("authenticationController", () => {
       });
     });
   });
+
+  describe("refreshToken", () => {
+    it("should return 500 if there's error in try catch code", async () => {
+      const mockReq = {};
+      const mockRes = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+      };
+
+      await authenticationController.refreshToken(mockReq, mockRes);
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        errors: [
+          {
+            code: "E-007",
+            message: expect.any(String),
+          },
+        ],
+      });
+    });
+    it("should return 401 if there's no refresh token", async () => {
+      const mockReq = {
+        cookies: {},
+      };
+
+      const mockRes = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+      };
+      await authenticationController.refreshToken(mockReq, mockRes);
+      expect(mockRes.status).toHaveBeenCalledWith(401);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        errors: [
+          {
+            code: "E-008",
+            message: "No token provided",
+          },
+        ],
+      });
+    });
+    it("should return 403 if the refresh token is invalid", async () => {
+      const mockReq = {
+        cookies: {
+          refreshToken: "invalid",
+        },
+      };
+      const mockRes = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+      };
+      await authenticationController.refreshToken(mockReq, mockRes);
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        errors: [
+          {
+            code: "E-010",
+            message: expect.any(String),
+          },
+        ],
+      });
+    });
+    it("should return 403 if the refresh token is valid but the user isn't found", async () => {
+      const token = jwt.sign({ id: "64645ad046304d62536a3c15" }, process.env.REFRESH_TOKEN_SECRET_KEY, { expiresIn: "10s" });
+      const mockReq = {
+        cookies: {
+          refreshToken: token,
+        },
+      };
+      const mockRes = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+      };
+      await authenticationController.refreshToken(mockReq, mockRes);
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        errors: [
+          {
+            code: "E-011",
+            message: "User from this token not found",
+          },
+        ],
+      });
+    });
+    it("should return 200 and new access token if everything is OK", async () => {
+      const token = jwt.sign({ id: "64645ad046304d62536a3c16" }, process.env.REFRESH_TOKEN_SECRET_KEY, { expiresIn: "10s" });
+      const mockReq = {
+        cookies: {
+          refreshToken: token,
+        },
+      };
+      const mockRes = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+      };
+      await authenticationController.refreshToken(mockReq, mockRes);
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        accessToken: expect.any(String),
+      });
+    });
+  });
 });
