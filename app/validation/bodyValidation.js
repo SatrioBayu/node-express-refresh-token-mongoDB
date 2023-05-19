@@ -58,4 +58,12 @@ const passwordValidator = (fieldName) => {
 module.exports = {
   authValidate: [usernameValidator, passwordValidator("password")],
   loginValidate: [usernameValidator, body("password").notEmpty().withMessage(AuthErr.passwordEmpty().errors[0])],
+  updateUsernameValidate: [usernameValidator],
+  logoutValidate: [
+    usernameValidator,
+    body("token").notEmpty().withMessage({
+      code: "E-016",
+      message: "Token not provided",
+    }),
+  ],
 };

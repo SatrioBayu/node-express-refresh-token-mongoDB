@@ -100,10 +100,10 @@ const handleLogin = async (req, res) => {
     // const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_TOKEN_SECRET_KEY);
 
     // PROD
-    // res.cookie("refreshToken", refreshToken, {
-    //   httpOnly: true,
-    //   maxAge: 1000 * 60 * 60 * 24 * 7,
-    // });
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+    });
 
     // DEV
     // res.cookie("refreshToken", refreshToken, {
