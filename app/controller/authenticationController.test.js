@@ -2,6 +2,7 @@ const authenticationController = require("./authenticationController");
 const User = require("../models/userModel");
 const mongoose = require("mongoose");
 const { validationResult } = require("express-validator");
+const jwt = require("jsonwebtoken");
 
 beforeAll(async () => {
   await mongoose.connect("mongodb://localhost:27017/learn-mongodb", {
@@ -17,6 +18,130 @@ afterAll(async () => {
 });
 
 describe("authenticationController", () => {
+  describe("authenticationAndAuthorization", () => {
+    it("should return 500 if there's error in try catch code", async () => {
+      const mockReq = {};
+      const mockRes = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+      };
+      const next = jest.fn();
+
+      await authenticationController.handleAuth(mockReq, mockRes, next);
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        errors: [
+          {
+            code: "E-007",
+            message: expect.any(String),
+          },
+        ],
+      });
+    });
+    it("should return 401 if there's no token", async () => {
+      const mockReq = {
+        headers: {},
+      };
+      const mockRes = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+      };
+      const next = jest.fn();
+      await authenticationController.handleAuth(mockReq, mockRes, next);
+      expect(mockRes.status).toHaveBeenCalledWith(401);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        errors: [
+          {
+            code: "E-008",
+            message: "No token provided",
+          },
+        ],
+      });
+    });
+    it("should return 403 if the token is valid but already blacklisted", async () => {
+      const mockReq = {
+        headers: {
+          authorization: "Bearer valid",
+        },
+      };
+      const mockRes = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+      };
+      const next = jest.fn();
+      await authenticationController.handleAuth(mockReq, mockRes, next);
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        errors: [
+          {
+            code: "E-009",
+            message: "Token blacklisted",
+          },
+        ],
+      });
+    });
+    it("should return 403 if the token is invalid", async () => {
+      const mockReq = {
+        headers: {
+          authorization: "Bearer invalid",
+        },
+      };
+      const mockRes = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+      };
+      const next = jest.fn();
+      await authenticationController.handleAuth(mockReq, mockRes, next);
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        errors: [
+          {
+            code: "E-010",
+            message: expect.any(String),
+          },
+        ],
+      });
+    });
+    it("should return 403 if the token is valid but not the right user", async () => {
+      const token = jwt.sign({ id: "64645ad046304d62536a3c15" }, process.env.ACCESS_TOKEN_SECRET_KEY, { expiresIn: "10s" });
+      const mockReq = {
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
+      };
+      const mockRes = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+      };
+      const next = jest.fn();
+      await authenticationController.handleAuth(mockReq, mockRes, next);
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.send).toHaveBeenCalledWith({
+        errors: [
+          {
+            code: "E-011",
+            message: expect.any(String),
+          },
+        ],
+      });
+    });
+    it("should return next if there is no error", async () => {
+      const token = jwt.sign({ id: "64645ad046304d62536a3c16" }, process.env.ACCESS_TOKEN_SECRET_KEY, { expiresIn: "10s" });
+      const mockReq = {
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
+      };
+      const mockRes = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+      };
+      const next = jest.fn();
+      await authenticationController.handleAuth(mockReq, mockRes, next);
+      expect(next).toHaveBeenCalled();
+    });
+  });
+
   describe("registerUser", () => {
     it("should return 500 if there's error in try catch code", async () => {
       const mockReq = {};
@@ -30,8 +155,8 @@ describe("authenticationController", () => {
       expect(mockRes.send).toHaveBeenCalledWith({
         errors: [
           {
-            code: "E-003",
-            message: "Something went wrong",
+            code: "E-007",
+            message: expect.any(String),
           },
         ],
       });
@@ -75,8 +200,8 @@ describe("authenticationController", () => {
       expect(mockRes.send).toHaveBeenCalledWith({
         errors: [
           {
-            code: "E-002",
-            message: "Username already exists",
+            code: "E-004",
+            message: "Username already exist",
           },
         ],
       });
@@ -117,8 +242,8 @@ describe("authenticationController", () => {
       expect(mockRes.send).toHaveBeenCalledWith({
         errors: [
           {
-            code: "E-003",
-            message: "Something went wrong",
+            code: "E-007",
+            message: expect.any(String),
           },
         ],
       });
@@ -161,7 +286,7 @@ describe("authenticationController", () => {
       expect(mockRes.send).toHaveBeenCalledWith({
         errors: [
           {
-            code: "E-004",
+            code: "E-005",
             message: "Invalid username or password",
           },
         ],
@@ -183,7 +308,7 @@ describe("authenticationController", () => {
       expect(mockRes.send).toHaveBeenCalledWith({
         errors: [
           {
-            code: "E-004",
+            code: "E-005",
             message: "Invalid username or password",
           },
         ],
@@ -208,8 +333,8 @@ describe("authenticationController", () => {
       expect(mockRes.send).toHaveBeenCalledWith({
         errors: [
           {
-            code: "E-005",
-            message: "You are already logged in",
+            code: "E-006",
+            message: "Already login",
           },
         ],
       });
