@@ -131,7 +131,7 @@ describe("authenticationController", () => {
       });
     });
     it("should return next if there is no error", async () => {
-      const token = jwt.sign({ id: "64645ad046304d62536a3c16" }, process.env.ACCESS_TOKEN_SECRET_KEY, { expiresIn: "10s" });
+      const token = jwt.sign({ id: "64673884dd70d7c7ca4dc599" }, process.env.ACCESS_TOKEN_SECRET_KEY, { expiresIn: "10s" });
       const mockReq = {
         headers: {
           authorization: `Bearer ${token}`,
@@ -278,8 +278,8 @@ describe("authenticationController", () => {
     it("should return 401 if the password is incorrect", async () => {
       const mockReq = {
         body: {
-          username: "bayu",
-          password: "password",
+          username: "Rora",
+          password: "123456789",
         },
       };
       const mockRes = {
@@ -437,7 +437,7 @@ describe("authenticationController", () => {
       });
     });
     it("should return 403 if the token is valid but not for the current user", async () => {
-      const token = jwt.sign({ id: "64645ad046304d62536a3c16" }, process.env.ACCESS_TOKEN_SECRET_KEY, { expiresIn: "10s" });
+      const token = jwt.sign({ id: "64673884dd70d7c7ca4dc599" }, process.env.ACCESS_TOKEN_SECRET_KEY, { expiresIn: "10s" });
       const mockReq = {
         body: {
           username: "Rora",
@@ -482,7 +482,7 @@ describe("authenticationController", () => {
       });
     });
     it("should return 200 if everything is OK", async () => {
-      const token = jwt.sign({ id: "64645ad046304d62536a3c16" }, process.env.ACCESS_TOKEN_SECRET_KEY, { expiresIn: "10s" });
+      const token = jwt.sign({ id: "64673884dd70d7c7ca4dc599" }, process.env.ACCESS_TOKEN_SECRET_KEY, { expiresIn: "10s" });
       const mockReq = {
         body: {
           username: "Bayu",
@@ -589,7 +589,7 @@ describe("authenticationController", () => {
       });
     });
     it("should return 200 and new access token if everything is OK", async () => {
-      const token = jwt.sign({ id: "64645ad046304d62536a3c16" }, process.env.REFRESH_TOKEN_SECRET_KEY, { expiresIn: "10s" });
+      const token = jwt.sign({ id: "64673884dd70d7c7ca4dc599" }, process.env.REFRESH_TOKEN_SECRET_KEY, { expiresIn: "10s" });
       const mockReq = {
         cookies: {
           refreshToken: token,
