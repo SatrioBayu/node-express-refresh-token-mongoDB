@@ -97,7 +97,7 @@ const handleLogin = async (req, res) => {
     if (refreshTokenCookie) return res.status(403).send(AuthErr.alreadyLogin());
 
     const accessToken = generateAccessToken(user);
-    // const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_TOKEN_SECRET_KEY);
+    const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_TOKEN_SECRET_KEY);
 
     // PROD
     res.cookie("refreshToken", refreshToken, {
