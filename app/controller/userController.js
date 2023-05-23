@@ -1,6 +1,7 @@
 const { User } = require("../models");
 const { AuthErr, InternErr } = require("../errors");
 const bcrypt = require("bcryptjs");
+const imageKit = require("../middleware/imagekit");
 
 const handleUpdateUsername = async (req, res) => {
   try {
@@ -92,7 +93,71 @@ const handleUpdatePassword = async (req, res) => {
   }
 };
 
+const handleUpdateImage = async (req, res) => {
+  try {
+    const { id } = req.user;
+    if (!req.file)
+      return res.status(400).send({
+        errors: [
+          {
+            code: "E-015",
+            message: "No image uploaded",
+          },
+        ],
+      });
+
+    if (!req.file.mimetype.startsWith("image/"))
+      return res.status(400).send({
+        errors: [
+          {
+            code: "E-016",
+            message: "Invalid image type",
+          },
+        ],
+      });
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(403).send({
+        errors: [
+          {
+            code: "E-012",
+            message: "User from this token not found",
+          },
+        ],
+      });
+    }
+
+    if (user.photo_profile && user.photo_public_id) {
+      await imageKit.deleteFile(user.photo_public_id);
+    }
+
+    const result = await uploadImageToImageKit(req.file);
+    user.photo_profile = result.url;
+    user.photo_public_id = result.fileId;
+    await user.save();
+    res.status(200).send({
+      message: "Image successfully updated",
+    });
+  } catch (error) {
+    res.status(500).send(InternErr.internalError(error.message));
+  }
+};
+
+const uploadImageToImageKit = async (file) => {
+  try {
+    const result = await imageKit.upload({ file: file.buffer, fileName: file.originalname });
+    return result;
+  } catch (error) {
+    throw {
+      code: "E-022",
+      message: error.message,
+    };
+  }
+};
+
 module.exports = {
   handleUpdateUsername,
   handleUpdatePassword,
+  handleUpdateImage,
 };
