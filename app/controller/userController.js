@@ -1,5 +1,6 @@
 const { User } = require("../models");
 const { AuthErr, InternErr } = require("../errors");
+const bcrypt = require("bcryptjs");
 
 const handleUpdateUsername = async (req, res) => {
   try {
@@ -45,6 +46,53 @@ const handleUpdateUsername = async (req, res) => {
   }
 };
 
+const handleUpdatePassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(403).send({
+        errors: [
+          {
+            code: "E-012",
+            message: "User from this token not found",
+          },
+        ],
+      });
+    }
+    const isPasswordMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isPasswordMatch) {
+      return res.status(409).send({
+        errors: [
+          {
+            code: "E-013",
+            message: "Old password is incorrect",
+          },
+        ],
+      });
+    }
+    // if (oldPassword === newPassword) {
+    //   return res.status(409).send({
+    //     errors: [
+    //       {
+    //         code: "E-016",
+    //         message: "New password can't be same with old password",
+    //       },
+    //     ],
+    //   });
+    // }
+    const newHashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = newHashedPassword;
+    await user.save();
+    res.status(200).send({
+      message: "Password successfully updated",
+    });
+  } catch (error) {
+    res.status(500).send(InternErr.internalError(error.message));
+  }
+};
+
 module.exports = {
   handleUpdateUsername,
+  handleUpdatePassword,
 };
