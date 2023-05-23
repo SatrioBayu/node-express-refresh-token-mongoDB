@@ -15,5 +15,7 @@ router.post("/register", bodyValidation.authValidate, validationResult.validate,
 router.post("/login", bodyValidation.loginValidate, validationResult.validate, authenticationController.handleLogin);
 router.patch("/", authenticationController.handleAuth, bodyValidation.updateUsernameValidate, validationResult.validate, userController.handleUpdateUsername);
 router.post("/logout", bodyValidation.logoutValidate, validationResult.validate, authenticationController.handleLogout);
+router.patch("/updateImage", authenticationController.handleAuth, uploadOnMemory.single("photo"), userController.handleUpdateImage);
+router.post("/refresh", authenticationController.refreshToken);
 
 module.exports = router;
